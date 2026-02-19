@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema de Asistencia — Colegio</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #181c27;
+      --surface2: #1e2333;
+      --border: #2a3050;
+      --accent: #4fffb0;
+      --accent2: #4f9fff;
+      --danger: #ff4f6d;
+      --text: #e8ecf5;
+      --text-muted: #6b7799;
+      --radius: 12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(79,255,176,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* Header */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      margin-bottom: 40px;
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      letter-spacing: -0.3px;
+    }
+    .logo-text span { color: var(--accent); }
+    .status-badge {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+      background: rgba(79,255,176,0.08);
+      border: 1px solid rgba(79,255,176,0.2);
+      padding: 6px 14px;
+      border-radius: 100px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 32px;
+      width: fit-content;
+    }
+    .tab {
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .tab.active {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* Panels */
+    .panel { display: none; animation: fadeIn 0.3s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-title-icon {
+      width: 28px; height: 28px;
+      background: rgba(79,255,176,0.1);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 12px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+    input, select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--text-muted); }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0f1117;
+    }
+    .btn-primary:hover { background: #3de89a; transform: translateY(-1px); }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger {
+      background: rgba(255,79,109,0.1);
+      color: var(--danger);
+      border: 1px solid rgba(255,79,109,0.2);
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* File upload */
+    .file-upload {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .file-upload:hover { border-color: var(--accent); background: rgba(79,255,176,0.03); }
+    .file-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .file-upload-text { font-size: 13px; color: var(--text-muted); }
+    .file-upload-text strong { color: var(--accent); }
+    .file-name { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); margin-top: 8px; }
+
+    /* Attendance scanner */
+    .scanner-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .camera-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      aspect-ratio: 4/3;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .camera-placeholder { text-align: center; color: var(--text-muted); }
+    .camera-placeholder .icon { font-size: 48px; margin-bottom: 12px; }
+    .camera-placeholder p { font-size: 13px; }
+    video, canvas { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); }
+    .camera-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .scan-frame {
+      width: 160px; height: 160px;
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(15,17,23,0.5);
+      animation: scanAnim 2s ease-in-out infinite;
+    }
+    @keyframes scanAnim {
+      0%, 100% { border-color: var(--accent); box-shadow: 0 0 20px rgba(79,255,176,0.3), 0 0 0 9999px rgba(15,17,23,0.5); }
+      50% { border-color: var(--accent2); box-shadow: 0 0 20px rgba(79,159,255,0.3), 0 0 0 9999px rgba(15,17,23,0.5); }
+    }
+
+    /* Result box */
+    .result-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      min-height: 200px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .result-empty { text-align: center; color: var(--text-muted); font-size: 13px; }
+    .result-success {
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+    .result-success .check { font-size: 48px; margin-bottom: 12px; }
+    .result-success .alumno-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .result-success .alumno-grado { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+    .result-success .alumno-hora {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      background: rgba(79,255,176,0.1);
+      color: var(--accent);
+      padding: 4px 12px;
+      border-radius: 100px;
+      display: inline-block;
+    }
+    .result-error { text-align: center; color: var(--danger); }
+    .result-error .icon { font-size: 40px; margin-bottom: 8px; }
+
+    /* Attendance table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-family: 'DM Mono', monospace;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 14px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(42,48,80,0.5);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'DM Mono', monospace;
+    }
+    .badge-present { background: rgba(79,255,176,0.1); color: var(--accent); }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+    .stat-value { font-family: 'DM Serif Display', serif; font-size: 32px; }
+    .stat-value.green { color: var(--accent); }
+    .stat-value.blue { color: var(--accent2); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      font-size: 14px;
+      display: flex; align-items: center; gap: 10px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 100;
+      max-width: 320px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(79,255,176,0.3); }
+    .toast.error { border-color: rgba(255,79,109,0.3); }
+
+    .mt-16 { margin-top: 16px; }
+    .flex { display: flex; }
+    .gap-12 { gap: 12px; }
+    .justify-end { justify-content: flex-end; }
+    .empty-state { text-align: center; padding: 48px; color: var(--text-muted); font-size: 14px; }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🎓</div>
+        <div class="logo-text">Asistencia<span>Facial</span></div>
+      </div>
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        Sistema activo
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('asistencia')">📸 Tomar Asistencia</button>
+    <button class="tab" onclick="switchTab('registrar')">➕ Registrar Alumno</button>
+    <button class="tab" onclick="switchTab('reporte')">📋 Reporte</button>
+  </div>
+
+  <!-- PANEL: ASISTENCIA -->
+  <div id="panel-asistencia" class="panel active">
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Presentes hoy</div>
+        <div class="stat-value green" id="stat-presentes">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Registros totales</div>
+        <div class="stat-value blue" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Alumnos registrados</div>
+        <div class="stat-value" id="stat-alumnos">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-title-icon">📷</div> Reconocimiento en tiempo real</div>
+      <div class="scanner-area">
+        <div>
+          <div class="camera-box" id="camera-box">
+            <div class="camera-placeholder" id="camera-placeholder">
+              <div class="icon">📷</div>
+              <p>Cámara no iniciada</p>
+            </div>
+            <video id="video" autoplay playsinline style="display:none;"></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <div class="camera-overlay" id="scan-overlay" style="display:none;">
+              <div class="scan-frame"></div>
+            </div>
+          </div>
+          <div class="flex gap-12 mt-16">
+            <button class="btn btn-primary" id="btn-camara" onclick="toggleCamara()">▶ Iniciar cámara</button>
+            <button class="btn btn-secondary" id="btn-capturar" onclick="capturarYReconocer()" disabled>📸 Registrar asistencia</button>
+          </div>
+        </div>
+        <div class="result-box" id="result-box">
+          <div class="result-empty">
+            <div style="font-size:36px; margin-bottom:8px;">👤</div>
+            <p>El resultado del reconocimiento aparecerá aquí</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: REGISTRAR ALUMNO -->
+  <div id="panel-registrar" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="card-title-icon">👤</div> Datos del alumno</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="inp-nombre" placeholder="Ej: Juan"/>
+        </div>
+        <div class="form-group">
+          <label>Apellido</label>
+          <input type="text" id="inp-apellido" placeholder="Ej: Pérez"/>
+        </div>
+        <div class="form-group full">
+          <label>Grado / Sección</label>
+          <input type="text" id="inp-grado" placeholder="Ej: 5A"/>
+        </div>
+      </div>
+      <div class="mt-16 flex justify-end">
+        <button class="btn btn-primary" onclick="registrarAlumno()">Guardar alumno →</button>
+      </div>
+    </div>
+
+    <div class="card" id="card-foto" style="display:none;">
+      <div class="card-title"><div class="card-title-icon">🖼️</div> Foto del alumno</div>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Sube una foto clara del rostro del alumno para activar el reconocimiento facial.</p>
+      <div class="file-upload" id="file-upload-area">
+        <input type="file" id="inp-foto" accept="image/*" onchange="onFotoSeleccionada(event)"/>
+        <div style="font-size:32px; margin-bottom:8px;">🖼️</div>
+        <div class="file-upload-text"><strong>Haz clic o arrastra</strong> una foto aquí</div>
+        <div class="file-name" id="file-name-label"></div>
+      </div>
+      <div class="mt-16 flex justify-end">
+        <button class="btn btn-primary" id="btn-subir-foto" onclick="subirFoto()" disabled>Subir foto y activar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: REPORTE -->
+  <div id="panel-reporte" class="panel">
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-title-icon">📋</div> Registro de asistencias
+        </div>
+        <button class="btn btn-secondary" onclick="cargarAsistencias()" style="font-size:12px; padding:8px 16px;">↻ Actualizar</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Alumno</th>
+              <th>Grado</th>
+              <th>Fecha y hora</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-asistencias">
+            <tr><td colspan="4"><div class="empty-state"><div class="icon">📭</div><p>Cargando asistencias...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'http://127.0.0.1:8000';
+  let alumnoActualId = null;
+  let stream = null;
+  let camaraActiva = false;
+
+  // ---- TABS ----
+  function switchTab(tab) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'reporte') cargarAsistencias();
+    if (tab === 'asistencia') cargarStats();
+  }
+
+  // ---- TOAST ----
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // ---- STATS ----
+  async function cargarStats() {
+    try {
+      const [asistencias, alumnos] = await Promise.all([
+        fetch(`${API}/asistencia/`).then(r => r.json()),
+        fetch(`${API}/alumnos/`).then(r => r.json())
+      ]);
+      const hoy = new Date().toLocaleDateString('es-PE');
+      const presentes = asistencias.filter(a => a.fecha.startsWith(new Date().toLocaleDateString('es-PE').split('/').reverse().join('-')) || a.fecha.includes(hoy)).length;
+      document.getElementById('stat-presentes').textContent = asistencias.length;
+      document.getElementById('stat-total').textContent = asistencias.length;
+      document.getElementById('stat-alumnos').textContent = alumnos.length;
+    } catch(e) {}
+  }
+
+  // ---- CAMARA ----
+  async function toggleCamara() {
+    const btn = document.getElementById('btn-camara');
+    const video = document.getElementById('video');
+    const placeholder = document.getElementById('camera-placeholder');
+    const overlay = document.getElementById('scan-overlay');
+    const btnCapturar = document.getElementById('btn-capturar');
+
+    if (!camaraActiva) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        placeholder.style.display = 'none';
+        overlay.style.display = 'flex';
+        btn.textContent = '⏹ Detener cámara';
+        btnCapturar.disabled = false;
+        camaraActiva = true;
+      } catch(e) {
+        showToast('No se pudo acceder a la cámara', 'error');
+      }
+    } else {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      video.style.display = 'none';
+      placeholder.style.display = 'flex';
+      overlay.style.display = 'none';
+      btn.textContent = '▶ Iniciar cámara';
+      btnCapturar.disabled = true;
+      camaraActiva = false;
+    }
+  }
+
+  async function capturarYReconocer() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(async (blob) => {
+      const formData = new FormData();
+      formData.append('foto', blob, 'captura.jpg');
+
+      const resultBox = document.getElementById('result-box');
+      resultBox.innerHTML = '<div style="text-align:center; color:var(--text-muted);">🔍 Procesando...</div>';
+
+      try {
+        const res = await fetch(`${API}/asistencia/reconocer`, { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (res.ok) {
+          resultBox.innerHTML = `
+            <div class="result-success">
+              <div class="check">✅</div>
+              <div class="alumno-name">${data.alumno}</div>
+              <div class="alumno-grado">${data.grado}</div>
+              <div class="alumno-hora">⏰ ${data.hora}</div>
+            </div>`;
+          showToast(`Asistencia registrada: ${data.alumno}`);
+          cargarStats();
+        } else {
+          resultBox.innerHTML = `<div class="result-error"><div class="icon">❌</div><p>${data.detail || 'Rostro no reconocido'}</p></div>`;
+          showToast('Rostro no reconocido', 'error');
+        }
+      } catch(e) {
+        resultBox.innerHTML = `<div class="result-error"><div class="icon">⚠️</div><p>Error de conexión</p></div>`;
+      }
+    }, 'image/jpeg');
+  }
+
+  // ---- REGISTRAR ALUMNO ----
+  async function registrarAlumno() {
+    const nombre = document.getElementById('inp-nombre').value.trim();
+    const apellido = document.getElementById('inp-apellido').value.trim();
+    const grado = document.getElementById('inp-grado').value.trim();
+
+    if (!nombre || !apellido || !grado) { showToast('Completa todos los campos', 'error'); return; }
+
+    try {
+      const res = await fetch(`${API}/alumnos/?nombre=${encodeURIComponent(nombre)}&apellido=${encodeURIComponent(apellido)}&grado=${encodeURIComponent(grado)}`, { method: 'POST' });
+      const data = await res.json();
+      alumnoActualId = data.id;
+      showToast(`Alumno registrado con ID: ${data.id}`);
+      document.getElementById('card-foto').style.display = 'block';
+      document.getElementById('card-foto').scrollIntoView({ behavior: 'smooth' });
+    } catch(e) {
+      showToast('Error al registrar alumno', 'error');
+    }
+  }
+
+  function onFotoSeleccionada(event) {
+    const file = event.target.files[0];
+    if (file) {
+      document.getElementById('file-name-label').textContent = '📎 ' + file.name;
+      document.getElementById('btn-subir-foto').disabled = false;
+    }
+  }
+
+  async function subirFoto() {
+    const foto = document.getElementById('inp-foto').files[0];
+    if (!foto || !alumnoActualId) { showToast('Selecciona una foto', 'error'); return; }
+
+    const formData = new FormData();
+    formData.append('foto', foto);
+
+    try {
+      const res = await fetch(`${API}/alumnos/${alumnoActualId}/foto`, { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('¡Foto registrada! El alumno ya puede ser reconocido.');
+        document.getElementById('inp-nombre').value = '';
+        document.getElementById('inp-apellido').value = '';
+        document.getElementById('inp-grado').value = '';
+        document.getElementById('inp-foto').value = '';
+        document.getElementById('file-name-label').textContent = '';
+        document.getElementById('btn-subir-foto').disabled = true;
+        document.getElementById('card-foto').style.display = 'none';
+        alumnoActualId = null;
+      } else {
+        showToast(data.detail || 'Error al subir foto', 'error');
+      }
+    } catch(e) {
+      showToast('Error de conexión', 'error');
+    }
+  }
+
+  // ---- REPORTE ----
+  async function cargarAsistencias() {
+    try {
+      const data = await fetch(`${API}/asistencia/`).then(r => r.json());
+      const tbody = document.getElementById('tabla-asistencias');
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="icon">📭</div><p>No hay asistencias registradas aún</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.reverse().map(a => `
+        <tr>
+          <td><strong>${a.alumno}</strong></td>
+          <td>${a.grado}</td>
+          <td style="font-family: 'DM Mono', monospace; font-size:12px;">${a.fecha}</td>
+          <td><span class="badge badge-present"><span class="badge-dot"></span>Presente</span></td>
+        </tr>
+      `).join('');
+    } catch(e) {
+      document.getElementById('tabla-asistencias').innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="icon">⚠️</div><p>Error al cargar datos</p></div></td></tr>';
+    }
+  }
+
+  // Init
+  cargarStats();
+</script>
+</body>
+</html>
