@@ -1,1 +1,14 @@
+# Entorno virtual
+venv/
+__pycache__/
+*.pyc
 
+# Datos sensibles y almacenamiento
+backend/storage/fotos_alumnos/
+backend/storage/db/
+*.db
+*.env
+
+# IDEs
+.vscode/
+.idea/
